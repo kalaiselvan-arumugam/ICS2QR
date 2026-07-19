@@ -88,7 +88,7 @@ public class Main extends Application {
             stage.setY(event.getScreenY() - yOffset);
         });
 
-        Label titleLabel = new Label("MyMeetings Linker");
+        Label titleLabel = new Label("MyMeetings Linker v1.0.0");
         titleLabel.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 13px;");
 
         // Spacer to push window actions right
