@@ -34,6 +34,7 @@ public class Minifier {
         String rrule = "";
         List<String> exdates = new ArrayList<>();
         String location = "";
+        String organizer = "";
         String description = "";
 
         boolean inEvent = false;
@@ -78,6 +79,9 @@ public class Minifier {
                 case "LOCATION":
                     location = cleanLine;
                     break;
+                case "ORGANIZER":
+                    organizer = cleanLine;
+                    break;
                 case "DESCRIPTION":
                     description = value;
                     break;
@@ -92,6 +96,7 @@ public class Minifier {
 
         if (!uid.isEmpty()) builder.append(uid).append("\n");
         if (!summary.isEmpty()) builder.append(summary).append("\n");
+        if (!organizer.isEmpty()) builder.append(organizer).append("\n");
         if (!dtstart.isEmpty()) builder.append(dtstart).append("\n");
         if (!dtend.isEmpty()) builder.append(dtend).append("\n");
         if (!rrule.isEmpty()) builder.append(rrule).append("\n");
@@ -100,12 +105,23 @@ public class Minifier {
         }
         if (!location.isEmpty()) builder.append(location).append("\n");
 
-        // Compress Description to only contain the extracted Teams join details
-        String teamsUrl = extractTeamsUrl(description);
-        if (teamsUrl == null && location.contains("teams.microsoft.com")) {
-            teamsUrl = extractTeamsUrl(location);
+        // Decode ICS escape sequences before extraction so that patterns like
+        // 'Meeting ID\: 291 039 029 031' and multi-line descriptions work correctly.
+        String decodedDesc = description
+                .replace("\\n", "\n")
+                .replace("\\N", "\n")
+                .replace("\\:", ":")
+                .replace("\\,", ",")
+                .replace("\\;", ";");
+        String decodedLocation = location
+                .replace("\\n", "\n")
+                .replace("\\:", ":");
+
+        String teamsUrl = extractTeamsUrl(decodedDesc);
+        if (teamsUrl == null && decodedLocation.contains("teams.microsoft.com")) {
+            teamsUrl = extractTeamsUrl(decodedLocation);
         }
-        String[] credentials = extractTeamsCredentials(description);
+        String[] credentials = extractTeamsCredentials(decodedDesc);
 
         if (teamsUrl != null || credentials != null) {
             StringBuilder descBuilder = new StringBuilder();
@@ -135,13 +151,19 @@ public class Minifier {
 
     private static String extractTeamsUrl(String text) {
         if (text == null) return null;
-        Pattern pattern = Pattern.compile("https?://[a-zA-Z0-9.-]*teams\\.microsoft\\.com/l/meetup-join/\\S+");
+        // Match various Teams URL formats: meetup-join, /meet/, teams.live.com, GCC-High
+        Pattern pattern = Pattern.compile(
+            "https?://[a-zA-Z0-9.-]*(teams\\.microsoft\\.com|teams\\.live\\.com|" +
+            "gov\\.teams\\.microsoft\\.us|dod\\.teams\\.microsoft\\.us)" +
+            "/(l/meetup-join|meet|dl/launcher)[^\\s<>\"]*",
+            Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(text);
         if (matcher.find()) {
             String url = matcher.group();
-            // Clean up trailing characters
-            if (url.endsWith(">")) url = url.substring(0, url.length() - 1);
-            if (url.endsWith(")")) url = url.substring(0, url.length() - 1);
+            // Strip common trailing punctuation
+            while (!url.isEmpty() && ">,) ".indexOf(url.charAt(url.length() - 1)) >= 0) {
+                url = url.substring(0, url.length() - 1);
+            }
             return url;
         }
         return null;
