@@ -83,7 +83,11 @@ public class Minifier {
                     organizer = cleanLine;
                     break;
                 case "DESCRIPTION":
-                    description = value;
+                    if (description.isEmpty()) {
+                        description = value;
+                    } else {
+                        description += "\n" + value;
+                    }
                     break;
             }
         }
