@@ -193,14 +193,14 @@ public class Main extends Application {
 
         // Bounding wrapper card for the QR code image
         VBox qrWrapper = new VBox();
-        qrWrapper.setPadding(new Insets(10));
+        qrWrapper.setPadding(new Insets(0));
         qrWrapper.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-alignment: center;");
-        qrWrapper.setPrefSize(200, 200);
-        qrWrapper.setMaxSize(200, 200);
+        qrWrapper.setPrefSize(260, 260);
+        qrWrapper.setMaxSize(260, 260);
 
         qrImageView = new ImageView();
-        qrImageView.setFitWidth(180);
-        qrImageView.setFitHeight(180);
+        qrImageView.setFitWidth(260);
+        qrImageView.setFitHeight(260);
         qrWrapper.getChildren().add(qrImageView);
 
         filenameLabel = new Label();
@@ -249,7 +249,7 @@ public class Main extends Application {
             minifiedPayload = Minifier.minifyAndEncode(content);
             
             // Build the QR matrix image preview
-            javafx.scene.image.WritableImage qrImage = QrCodeGenerator.generateQrImage(minifiedPayload, 250, 250);
+            javafx.scene.image.WritableImage qrImage = QrCodeGenerator.generateQrImage(minifiedPayload, 260, 260);
             qrImageView.setImage(qrImage);
 
             // Compute statistics
